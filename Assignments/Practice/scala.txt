@@ -1,0 +1,7 @@
+spark-shell
+var a=sc.textFile("input.txt")
+var b=a.flatMap(_.split(" "))
+var c=b.map((_,1))
+var d=c.reduceByKey(_+_)
+d.saveAsTextFile("Manas")
+d.forEach(println)

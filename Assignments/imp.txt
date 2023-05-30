@@ -1,0 +1,252 @@
+#### Assig 3 - 
+reducing skewness
+method 1 -
+    sns.distplot(df["Fare"])
+    FareRemoveSkew=np.sqrt(df["Fare"])
+    FareRemoveSkew.skew()
+    sns.distplot(FareRemoveSkew)
+
+method 2 -
+    from scipy import stats
+    epsilon=np.finfo(float).eps
+    df["Fare"]=df["Fare"]+epsilon
+    df["Fare"]=stats.boxcox(df["Fare"])[0]
+    df["Fare"].skew()
+
+    Box-Cox transformation is a method used to normalize the distribution of a variable by applying a power transformation.
+    It is commonly employed when dealing with skewed or non-normal data distributions
+
+
+
+
+
+
+#### Assig 4 -
+
+Box Plot
+    Q1=data["math score"].quantile(0.25)
+    Q3=data["math score"].quantile(0.75)
+    IQR=Q3-Q1
+    low=Q1-1.5*IQR
+    high=Q3+1.5*IQR
+    outliers=data[(data["math score"]<low)|(data["math score"]>high)]
+    filtered=data[~data.index.isin(outliers.index)]
+    filtered
+
+MinMax
+    from sklearn.preprocessing import MinMaxScaler
+    scaler=MinMaxScaler()
+    data["math score"]=scaler.fit_transform(data["math score"].values.reshape(-1,1))
+    sns.boxplot(data["math score"])
+
+Zscore
+    from scipy import stats
+    data["reading score"]=np.abs(stats.zscore(data["reading score"]))
+    sns.boxplot(data["reading score"])
+
+
+
+
+
+
+#### Assig 5 -
+    # categrical variable - race/ethnicity
+    # numeric variable - math score
+    stats_race_math=df.groupby('race/ethnicity')['math score'].agg(['mean','median','min','max','std'])
+    stats_race_math_list=stats_race_math.values.flatten().tolist()
+    stats_race_math_list
+
+
+    # Finding mean by grouping intervals
+    id_interval=[0,50,100,150]
+    id_labels=["0-50","51-100","101-150"]
+    df2["idset"]=pd.cut(df2["Id"],bins=id_interval,labels=id_labels,right=False)
+    summery_stats_id=df2.groupby("idset")["SepalLengthCm"].agg(["mean","median","min","max"])
+    summery_stats_id
+
+
+
+
+#### Assig 6 -
+    df.groupby("Species")["SepalLengthCm"].describe()
+
+
+
+
+#### Assig 7 -
+    from sklearn.linear_model import LinearRegression
+    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import mean_squared_error,r2_score
+
+    x_train,x_test,y_train,y_test=train_test_split(x,y,test_size=0.2,random_state=42)
+    model = LinearRegression()
+    model.fit(x_train, y_train)
+    # Make predictions to test data
+    y_pred=model.predict(x_test)
+    # evaluate model
+    mse=mean_squared_error(y_test,y_pred)
+    r2=r2_score(y_test,y_pred)
+    sns.regplot(data=df,x="LSTAT",y='MEDV')
+    sns.heatmap(df.corr(),annot=True)
+
+
+
+
+#### Assig 8 - 
+    from sklearn.metrics import confusion_matrix,accuracy_score,precision_score,recall_score
+   
+    confusion=confusion_matrix(y_test,y_pred)
+    tn,fp,fn,tp= confusion.ravel()   
+    accuracy=accuracy_score(y_test,y_pred)
+
+
+
+
+#### Assig 9 -
+    from sklearn.naive_bayes import GaussianNB
+    model2=GaussianNB()
+    model2.fit(x_train,y_train)
+
+
+
+
+#### Assig 10 -
+    from nltk.tokenize import word_tokenize
+    from nltk.stem import WordNetLemmatizer,PorterStemmer
+    from nltk.corpus import stopwords
+    from nltk import pos_tag
+
+    with open("../Datasets/file1.txt","r") as file:
+        doc1=file.read()
+
+    tokens={}
+    i=0;
+    for doc in docs:
+        tokens[i]=word_tokenize(doc)
+        i=i+1
+
+
+    stop_words=set(stopwords.words('english'))
+
+
+    filtered_tokens={}
+    i=0
+    for token in tokens:
+        filtered_tokens[i]=[t for t in tokens[token] if t.lower() not in stop_words]
+        i=i+1
+
+
+    stemmer=PorterStemmer()
+    stemmed_tokens={}
+    i=0
+    for filtered_token in filtered_tokens:
+        stemmed_tokens[i]=[stemmer.stem(token) for token in filtered_tokens[filtered_token]]
+        i=i+1
+
+
+    lemmatizer=WordNetLemmatizer()
+    lemmatized_tokens={}
+    i=0
+    for stemmed_token in stemmed_tokens:
+        lemmatized_tokens[i]=[lemmatizer.lemmatize(token) for token in stemmed_tokens[stemmed_token]]
+        i=i+1
+
+
+    pos_tags={}
+    i=0
+    for filtered_token in filtered_tokens:
+        pos_tags[i]=pos_tag(filtered_tokens[filtered_token])
+        i=i+1
+
+
+
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    vectorizer=TfidfVectorizer()
+    tfidf_matrix=vectorizer.fit_transform(docs)
+    feature_names=vectorizer.get_feature_names_out()
+    for i in range(len(docs)):
+        print("Document : ",docs[i])
+        for j, word in enumerate(feature_names):
+            tfidf_value=tfidf_matrix[i,j]
+            print("Word : ",word,"TF-IDF : ",tfidf_value)
+
+
+
+    tf={}
+    for word in filtered_tokens[0]:
+        if word in tf:
+            tf[word]+=1
+        else:
+            tf[word]=1
+    word_counts=len(filtered_tokens)
+    for word in tf:
+        tf[word]=tf[word]/word_counts
+        print("word : ",word ," : ",tf[word])
+
+
+
+    import numpy as np
+    idf={}
+    for word in filtered_tokens[1]:
+        for doc in filtered_tokens:
+            if(word in filtered_tokens[doc]):
+                if word in idf:
+                    idf[word]+=1
+                else:
+                    idf[word]=1
+        idf[word]=np.log(3/idf[word])
+        print("IDF for word : ",word," ",idf[word])
+
+
+
+
+
+#### Assig 11 -
+
+    sns.boxplot(data=df,x="Sex",y="Age",hue="Survived")
+
+    graph_surv=sns.FacetGrid(df,col="Sex",hue="Survived",height=4)
+    graph_surv.map(plt.hist,"Age",bins=20)
+    graph_surv.set_axis_labels("Age","Count")
+    graph_surv.add_legend()
+    plt.suptitle('Distribution of Age by Gender and Survival', y=1.05)
+    plt.show()
+
+
+#### Assig 12 -
+
+features=df.columns
+
+for feature in features:
+    print("\n--------- ",feature," -----------\n")
+    plt.figure(figsize=(8,6))
+    plt.hist(df[feature].values,alpha=0.7)
+    plt.xlabel(feature)
+    plt.ylabel("frequency")
+    plt.title("Histogram for "+feature)
+    plt.show()
+
+df.hist(figsize=(10,10))
+
+
+#### Assig 14 - Hadoop
+    start-yarn.sh
+    start-dfs.sh
+    jps
+    hdfs dfs -mkdir /suyog_hadoop
+    hdfs dfs -put /home/pict/suyog.txt /suyog_hadoop/
+    hdfs dfs -ls /suyog_hadoop/
+    hdfs dfs -cat /suyog_hadoop/suyog.txt
+    yarn jar /home/pict/hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-3.2.3.jar wordcount /suyog_hadoop/suyog.txt /suyog_output/
+    hdfs dfs -ls /suyog_output
+    hdfs dfs -cat /suyog_output/part-r-00000
+
+
+#### Assig 15 - SCALA
+    var a = sc.textFile("input.txt")
+    var b=a.flatMap(_.split(" "))
+    var c=b.map((_,1))
+    var d=c.reduceByKey(_+_)
+    d.saveAsTextFile("Suyog.txt")
+    d.foreEach(println)
+
